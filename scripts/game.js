@@ -7,11 +7,11 @@ import { updateGameStats } from "./localStorage.js";
 export function updateBoardSize() {
   document.documentElement.style.setProperty(
     "--board-width",
-    gameOptions.width
+    gameOptions.width,
   );
   document.documentElement.style.setProperty(
     "--board-height",
-    gameOptions.height
+    gameOptions.height,
   );
 }
 
@@ -24,6 +24,19 @@ export function generateGame(board) {
   placeMines(gameBoard);
   calculateMineNeighbors(gameBoard);
   renderBoard(board, gameBoard);
+}
+
+export function resolveCoord(value, max) {
+  if (gameOptions.type !== "edgeless") return value;
+  return (value + max) % max;
+}
+
+export function isInside(row, col) {
+  if (gameOptions.type === "edgeless") return true;
+
+  return (
+    row >= 0 && row < gameOptions.height && col >= 0 && col < gameOptions.width
+  );
 }
 
 export function setDifficulty(level) {
@@ -58,7 +71,7 @@ export function setDifficulty(level) {
   }
   updateBoardSize();
   console.log(
-    `Difficulty set to ${level}: ${gameOptions.width}x${gameOptions.height}, ${gameOptions.mineCount} mines`
+    `Difficulty set to ${level}: ${gameOptions.width}x${gameOptions.height}, ${gameOptions.mineCount} mines`,
   );
   start();
 }
@@ -120,17 +133,12 @@ export function calculateMineNeighbors(board) {
 
       let mineCount = 0;
       for (const [dx, dy] of directions) {
-        const newRow = row + dx;
-        const newCol = col + dy;
-        if (
-          newRow >= 0 &&
-          newRow < gameOptions.height &&
-          newCol >= 0 &&
-          newCol < gameOptions.width
-        ) {
-          if (board[newRow][newCol].mine) {
-            mineCount++;
-          }
+        const r = resolveCoord(row + dx, gameOptions.height);
+        const c = resolveCoord(col + dy, gameOptions.width);
+
+        if (!isInside(r, c)) continue;
+        if (board[r][c].mine) {
+          mineCount++;
         }
       }
       board[row][col].neighborMines = mineCount;
@@ -153,18 +161,13 @@ export function calculateNeighborFlags(board, row, col) {
   let flagCount = 0;
 
   for (const [dx, dy] of directions) {
-    const newRow = row + dx;
-    const newCol = col + dy;
+    const r = resolveCoord(row + dx, gameOptions.height);
+    const c = resolveCoord(col + dy, gameOptions.width);
 
-    if (
-      newRow >= 0 &&
-      newRow < gameOptions.height &&
-      newCol >= 0 &&
-      newCol < gameOptions.width
-    ) {
-      if (board[newRow][newCol].flagged) {
-        flagCount++;
-      }
+    if (!isInside(r, c)) continue;
+
+    if (board[r][c].flagged) {
+      flagCount++;
     }
   }
   board[row][col].neighborFlags = flagCount;
@@ -204,20 +207,16 @@ export function revealNeighbors(board, row, col) {
   ];
 
   for (const [dx, dy] of directions) {
-    const newRow = row + dx;
-    const newCol = col + dy;
-    if (
-      newRow >= 0 &&
-      newRow < gameOptions.height &&
-      newCol >= 0 &&
-      newCol < gameOptions.width
-    ) {
-      const cellElement = document.querySelector(
-        `.cell[data-row='${newRow}'][data-col='${newCol}']`
-      );
+    const r = resolveCoord(row + dx, gameOptions.height);
+    const c = resolveCoord(col + dy, gameOptions.width);
 
-      revealCell(board, newRow, newCol, cellElement);
-    }
+    if (!isInside(r, c)) continue;
+
+    const cellElement = document.querySelector(
+      `.cell[data-row='${r}'][data-col='${c}']`,
+    );
+
+    revealCell(board, r, c, cellElement);
   }
 }
 
@@ -258,7 +257,7 @@ function revealAllMines(board) {
     for (let col = 0; col < gameOptions.width; col++) {
       if (board[row][col].mine) {
         const cellElement = document.querySelector(
-          `.cell[data-row='${row}'][data-col='${col}']`
+          `.cell[data-row='${row}'][data-col='${col}']`,
         );
         cellElement.classList.add("mine2");
       }
@@ -275,7 +274,7 @@ function flagAllMines(board) {
     for (let col = 0; col < gameOptions.width; col++) {
       if (board[row][col].mine) {
         const cellElement = document.querySelector(
-          `.cell[data-row='${row}'][data-col='${col}']`
+          `.cell[data-row='${row}'][data-col='${col}']`,
         );
         cellElement.classList.add("flagged");
       }

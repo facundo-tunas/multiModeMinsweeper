@@ -9,6 +9,7 @@ export const gameOptions = {
   mouseDown: false,
   pressedNeighbours: false,
   difficulty: "intermediate",
+  type: "normal"
 };
 
 export const DOMelements = {
@@ -31,19 +32,21 @@ export const DOMelements = {
   zoomOutButton: document.getElementById("zoom-out"),
 };
 
+
 export const storage = {
-  beginnerGames: 0,
-  beginnerWins: 0,
-  beginnerBest: Infinity,
-
-  intermediateGames: 0,
-  intermediateWins: 0,
-  intermediateBest: Infinity,
-
-  advancedGames: 0,
-  advancedWins: 0,
-  advancedBest: Infinity,
-
+  stats: {
+    normal: {
+      beginner: { games: 0, wins: 0, best: Infinity },
+      intermediate: { games: 0, wins: 0, best: Infinity },
+      advanced: { games: 0, wins: 0, best: Infinity },
+    },
+    edgeless: {
+      beginner: { games: 0, wins: 0, best: Infinity },
+      intermediate: { games: 0, wins: 0, best: Infinity },
+      advanced: { games: 0, wins: 0, best: Infinity },
+    },
+  },
   zoomLevel: 1,
-  theme: "dark",
+  theme: "dark"
 };
+

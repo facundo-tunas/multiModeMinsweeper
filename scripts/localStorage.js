@@ -1,27 +1,28 @@
 import { gameOptions, storage } from "./config.js";
+import { generateStatisticsUI } from "./dom.js";
 
 export function saveToStorage() {
-  const keys = Object.keys(storage);
-  keys.forEach((key) => {
-    const value = storage[key];
-    localStorage.setItem(key, value);
-  });
+  localStorage.setItem("storage", JSON.stringify(storage));
 }
 
 export function updateGameStats(result, time) {
-  if (result) {
-    storage[`${gameOptions.difficulty}Wins`]++;
+  const { type, difficulty } = gameOptions;
+  const stats = storage.stats[type][difficulty];
 
-    if (storage[`${gameOptions.difficulty}Best`] > time) {
-      storage[`${gameOptions.difficulty}Best`] = time;
+  stats.games++;
+
+  if (result) {
+    stats.wins++;
+
+    if (time < stats.best) {
+      stats.best = time;
     }
   }
 
-  storage[`${gameOptions.difficulty}Games`]++;
-
   saveToStorage();
-  loadFromLocalStorage();
+  generateStatisticsUI();
 }
+
 
 export function loadZoomLevel() {
   const savedZoom = localStorage.getItem("zoomLevel");
@@ -34,18 +35,12 @@ export function updateZoom(value) {
 }
 
 export function loadFromLocalStorage() {
-  const keys = Object.keys(storage);
-  keys.forEach((key) => {
-    const value = localStorage.getItem(key);
-    if (value !== null) {
-      if (key.includes("Games") || key.includes("Wins")) {
-        storage[key] = parseInt(value, 10);
-      } else {
-        storage[key] = value;
-      }
-      setElement(key);
-    }
-  });
+  const raw = localStorage.getItem("storage");
+  if (!raw) return;
+
+  const parsed = JSON.parse(raw);
+
+  Object.assign(storage, parsed);
 }
 
 function setElement(key) {

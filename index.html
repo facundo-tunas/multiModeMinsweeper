@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="./styles/fonts.css" />
     <link rel="stylesheet" href="./styles/variables.css" />
     <link rel="stylesheet" href="./styles/header.css" />
-    <link rel="stylesheet" href="./styles/styles.css" />
+    <link rel="stylesheet" type='text/css' href="./styles/styles.css" />
     <link rel="stylesheet" href="./styles/modals.css" />
     <link rel="stylesheet" href="./styles/board.css" />
     <link rel="stylesheet" href="./styles/cells.css" />
@@ -32,67 +32,28 @@
       <button class="open-help">Help</button>
     </header>
 
-    <div class="settings-modal modal">
-      <div class="container">
-        <p class="options-title">Difficulty</p>
-        <ul>
-          <li class="beginner" data-difficulty="beginner">Beginner</li>
-          <li class="intermediate" data-difficulty="intermediate">
-            Intermediate
-          </li>
-          <li class="advanced" data-difficulty="advanced">Advanced</li>
-        </ul>
-        <button class="close-modal">Close</button>
-      </div>
-    </div>
+<div class="settings-modal modal">
+  <div class="container">
+    <p class="options-title">Mode</p>
+    <ul class="modes">
+      <li data-mode="normal">Normal</li>
+      <li data-mode="edgeless">Edgeless</li>
+    </ul>
+
+    <p class="options-title">Difficulty</p>
+    <ul class="difficulties">
+      <li class="beginner" data-difficulty="beginner">Beginner</li>
+      <li class="intermediate" data-difficulty="intermediate">Intermediate</li>
+      <li class="advanced" data-difficulty="advanced">Advanced</li>
+    </ul>
+
+    <button class="close-modal">Close</button>
+  </div>
+</div>
     <div class="statistics-modal modal">
       <div class="container">
-        <p class="options-title">Statistics</p>
-        <ul class="beginner">
-          <p class="subtitle">Beginner</p>
-          <div class="double">
-            <p>Games Played:</p>
-            <li id="beginnerGames"></li>
-          </div>
-          <div class="double">
-            <p>Games Won:</p>
-            <li id="beginnerWins"></li>
-          </div>
-          <div class="double">
-            <p>Best Time:</p>
-            <li id="beginnerBest"></li>
-          </div>
-        </ul>
-        <ul class="intermediate">
-          <p class="subtitle">Intermediate</p>
-          <div class="double">
-            <p>Games Played:</p>
-            <li id="intermediateGames"></li>
-          </div>
-          <div class="double">
-            <p>Games Won:</p>
-            <li id="intermediateWins"></li>
-          </div>
-          <div class="double">
-            <p>Best Time:</p>
-            <li id="intermediateBest"></li>
-          </div>
-        </ul>
-        <ul class="advanced">
-          <p class="subtitle">Advanced</p>
-          <div class="double">
-            <p>Games Played:</p>
-            <li id="advancedGames"></li>
-          </div>
-          <div class="double">
-            <p>Games Won:</p>
-            <li id="advancedWins"></li>
-          </div>
-          <div class="double">
-            <p>Best Time:</p>
-            <li id="advancedBest"></li>
-          </div>
-        </ul>
+        <div id="statistics-content"></div>
+
         <button class="close-modal">Close</button>
       </div>
     </div>

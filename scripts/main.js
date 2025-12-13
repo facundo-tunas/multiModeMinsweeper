@@ -1,11 +1,13 @@
 import { storage } from "./config.js";
-import { initializeEventListeners, updateHeaders } from "./dom.js";
+import { generateStatisticsUI, initializeEventListeners, updateHeaders } from "./dom.js";
 import { saveToStorage } from "./localStorage.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   updateHeaders();
   initializeEventListeners();
   checkTheme();
+
+  generateStatisticsUI();
 
   const themeToggleButton = document.getElementById("theme-toggle");
   themeToggleButton?.addEventListener("click", toggleTheme);

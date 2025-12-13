@@ -1,9 +1,11 @@
-import { gameOptions, DOMelements } from "./config.js";
+import { storage, gameOptions, DOMelements } from "./config.js";
 import {
   calculateNeighborFlags,
   checkWin,
   flagCell,
   generateGame,
+  isInside,
+  resolveCoord,
   revealCell,
   revealNeighbors,
   setDifficulty,
@@ -15,6 +17,8 @@ import { startTimer } from "./timer.js";
 export function initializeEventListeners() {
   generateGame(DOMelements.board);
   loadFromLocalStorage();
+
+  updateSelected();
 
   function hoveredCell() {
     const hoveredCell = document.querySelector(".hovered");
@@ -92,7 +96,7 @@ export function initializeEventListeners() {
         DOMelements.statisticsModal.style.display = "none";
         DOMelements.helpModal.style.display = "none";
       }, 300);
-    })
+    }),
   );
   DOMelements.startButton.addEventListener("click", start);
 
@@ -101,6 +105,16 @@ export function initializeEventListeners() {
     option.addEventListener("click", () => {
       setDifficulty(option.dataset.difficulty);
       DOMelements.settingsModal.style.display = "none";
+    });
+  });
+
+  const modeOptions = document.querySelectorAll(".settings-modal [data-mode]");
+  modeOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      setMode(option.dataset.mode);
+      DOMelements.settingsModal.style.display = "none";
+
+      updateSelected();
     });
   });
 
@@ -203,19 +217,15 @@ export function pressNeighbours(row, col) {
   ];
 
   for (const [dx, dy] of directions) {
-    const newRow = row + dx;
-    const newCol = col + dy;
-    if (
-      newRow >= 0 &&
-      newRow < gameOptions.height &&
-      newCol >= 0 &&
-      newCol < gameOptions.width
-    ) {
-      const cellElement = document.querySelector(
-        `.cell[data-row='${newRow}'][data-col='${newCol}']`
-      );
-      pressCell(cellElement);
-    }
+    const r = resolveCoord(row + dx, gameOptions.height);
+    const c = resolveCoord(col + dy, gameOptions.width);
+
+    if (!isInside(r, c)) continue;
+
+    const cellElement = document.querySelector(
+      `.cell[data-row='${r}'][data-col='${c}']`,
+    );
+    pressCell(cellElement);
   }
 
   function pressCell(cellElement) {
@@ -244,4 +254,84 @@ export function updateHeaders() {
         return "#acf9ff";
     }
   }
+}
+
+export function generateStatisticsUI() {
+  const container = document.getElementById("statistics-content");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const type = gameOptions.type;
+
+  const typeSection = document.createElement("section");
+  typeSection.className = "stats-type";
+
+  const typeTitle = document.createElement("p");
+  typeTitle.className = "options-title";
+  typeTitle.textContent = capitalize(type) + " Stats";
+  typeSection.appendChild(typeTitle);
+
+  for (const difficulty in storage.stats[type]) {
+    const stats = storage.stats[type][difficulty];
+
+    const ul = document.createElement("ul");
+    ul.className = `stats ${difficulty}`;
+
+    ul.innerHTML = `
+        <p class="subtitle">${capitalize(difficulty)}</p>
+
+        <div class="double">
+          <p>Games Played:</p>
+          <li id="${type}-${difficulty}-games">${stats.games}</li>
+        </div>
+
+        <div class="double">
+          <p>Games Won:</p>
+          <li id="${type}-${difficulty}-wins">${stats.wins}</li>
+        </div>
+
+        <div class="double">
+          <p>Best Time:</p>
+          <li id="${type}-${difficulty}-best">
+            ${formatBest(stats.best)}
+          </li>
+        </div>
+      `;
+
+    typeSection.appendChild(ul);
+  }
+
+  container.appendChild(typeSection);
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function formatBest(value) {
+  if (value === Infinity) return "";
+
+  const seconds = Math.floor((value / 1000) % 60);
+  const milliseconds = Math.floor(value % 1000);
+  return `${seconds}.${milliseconds}`;
+}
+
+export function setMode(mode) {
+  if (gameOptions.type === mode) return;
+
+  gameOptions.type = mode;
+
+  start();
+  updateSelected();
+  generateStatisticsUI();
+}
+
+export function updateSelected() {
+  const modeOptions = document.querySelectorAll(".settings-modal [data-mode]");
+  modeOptions.forEach((option) => {
+    if (gameOptions.type == option.dataset.mode)
+      option.classList.add("selected");
+    else option.classList.remove("selected");
+  });
 }
