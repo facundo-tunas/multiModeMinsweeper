@@ -3,19 +3,19 @@ import {
   calculateNeighborFlags,
   checkWin,
   flagCell,
-  generateGame,
   isInside,
   resolveCoord,
   revealCell,
   revealNeighbors,
   setDifficulty,
+  reset,
   start,
 } from "./game.js";
 import { loadFromLocalStorage } from "./localStorage.js";
-import { startTimer } from "./timer.js";
+import { renderBoard } from "./render.js";
 
 export function initializeEventListeners() {
-  generateGame(DOMelements.board);
+  renderBoard(DOMelements.board, null);
   loadFromLocalStorage();
 
   updateSelected();
@@ -32,7 +32,7 @@ export function initializeEventListeners() {
   }
 
   function keyStrokesListener(e) {
-    if (gameOptions.gameState > 1) return;
+    if (gameOptions.gameState !== 1) return;
 
     const [row, col, cell] = hoveredCell();
     if (row === null || col === null || cell === null) return;
@@ -98,13 +98,14 @@ export function initializeEventListeners() {
       }, 300);
     }),
   );
-  DOMelements.startButton.addEventListener("click", start);
+  DOMelements.startButton.addEventListener("click", reset);
 
   const difficultyOptions = document.querySelectorAll(".settings-modal li");
   difficultyOptions.forEach((option) => {
     option.addEventListener("click", () => {
       setDifficulty(option.dataset.difficulty);
       DOMelements.settingsModal.style.display = "none";
+      console.log(hoveredCell);
     });
   });
 
@@ -123,7 +124,7 @@ export function initializeEventListeners() {
   // right click
   document.addEventListener("mousedown", (e) => {
     if (e.button !== 2) return;
-    if (gameOptions.gameState > 1) return;
+    if (gameOptions.gameState !== 1) return;
     e.preventDefault();
 
     const [row, col, cell] = hoveredCell();
@@ -140,13 +141,15 @@ export function initializeEventListeners() {
 
   // left click
   document.addEventListener("mousedown", (e) => {
-    const [row, col, cell] = hoveredCell();
-    if (row === null || col === null || cell === null) return;
-
     if (e.button !== 0) return;
     if (gameOptions.gameState > 1) return;
 
+    const [row, col, cell] = hoveredCell();
+
+    if (!cell) return;
     cell.classList.add("pressed");
+
+    if (row === null || col === null || cell === null) return;
 
     if (cell.classList.contains("revealed")) {
       pressNeighbours(row, col);
@@ -165,24 +168,34 @@ export function initializeEventListeners() {
     if (gameOptions.gameState > 1) return;
 
     // reveal only if number of mines is flagged
-    calculateNeighborFlags(gameOptions.board, row, col);
+    if (gameOptions.gameState == 1) {
+      console.log("xd1");
+      console.log(
+        gameOptions.board[row][col].neighborFlags,
+        gameOptions.board[row][col].neighborMines,
+      );
+      calculateNeighborFlags(gameOptions.board, row, col);
+      if (
+        cell.classList.contains("revealed") &&
+        gameOptions.board[row][col].neighborFlags ==
+          gameOptions.board[row][col].neighborMines
+      ) {
+        console.log("xd1");
 
-    if (
-      cell.classList.contains("revealed") &&
-      gameOptions.board[row][col].neighborFlags ==
-        gameOptions.board[row][col].neighborMines
-    ) {
-      revealNeighbors(gameOptions.board, row, col);
-      gameOptions.mouseDown = false;
+        revealNeighbors(gameOptions.board, row, col);
+        gameOptions.mouseDown = false;
 
-      return;
+        return;
+      }
     }
 
-    if (gameOptions.gameState !== 1) {
-      gameOptions.gameState = 1;
-      startTimer();
+    if (gameOptions.gameState == 0) {
+      gameOptions.startRow = row;
+      gameOptions.startCol = col;
       updateHeaders();
+      start();
     }
+
     revealCell(gameOptions.board, row, col, cell);
     gameOptions.mouseDown = false;
   });
@@ -310,11 +323,14 @@ function capitalize(str) {
 }
 
 function formatBest(value) {
-  if (value === Infinity) return "";
+  if (value) {
+    const [integer, decimal] = value.split(".");
+    const formattedTime = `${integer.padStart(2, "0")}.${decimal}`;
 
-  const seconds = Math.floor((value / 1000) % 60);
-  const milliseconds = Math.floor(value % 1000);
-  return `${seconds}.${milliseconds}`;
+    return formattedTime;
+  } else {
+    return "—";
+  }
 }
 
 export function setMode(mode) {
@@ -322,7 +338,7 @@ export function setMode(mode) {
 
   gameOptions.type = mode;
 
-  start();
+  reset();
   updateSelected();
   generateStatisticsUI();
 }

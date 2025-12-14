@@ -2,6 +2,8 @@ import { gameOptions, DOMelements } from "./config.js";
 
 export function startTimer() {
   const startTime = Date.now();
+  gameOptions.startTime = startTime;
+
   gameOptions.timerDisplay = setInterval(() => {
     const elapsedTime = Date.now() - startTime;
     const seconds = Math.floor((elapsedTime / 1000) % 60);

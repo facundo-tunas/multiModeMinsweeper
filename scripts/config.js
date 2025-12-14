@@ -9,7 +9,9 @@ export const gameOptions = {
   mouseDown: false,
   pressedNeighbours: false,
   difficulty: "intermediate",
-  type: "normal"
+  type: "normal",
+  startRow: null,
+  startCol: null,
 };
 
 export const DOMelements = {

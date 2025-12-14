@@ -14,6 +14,7 @@
   background-image: url("../assets/unrevealed.png");
   background-size: cover;
 }
+
 .cell.pressed {
   background-image: url("../assets/empty.png");
 }
@@ -21,37 +22,51 @@
 .cell.revealed {
   background-image: url("../assets/empty.png");
 }
+
 .cell.mine2 {
   background-image: url("../assets/mine.png");
 }
+
 .cell.mine {
   background-image: url("../assets/mine-hit.png");
 }
+
 .cell.flagged {
   background-image: url("../assets/flag.png");
+}
+
+.cell.flagged.safe {
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEW9vb0AAAD/AAB7e3v///9UaJa4AAAAS0lEQVQI11WNwQnAMAwDRSawPIEjOkCg++9Wq4SG6nX4sIR7Bws7hnhBhlFYo8iQlcgsQ15UGKichhYtoy+Gn8KYFM67CxHQmfjWH/GqCYCzIeZyAAAAAElFTkSuQmCC");
 }
 
 .cell.n1 {
   color: var(--oneMine);
 }
+
 .cell.n2 {
   color: var(--twoMines);
 }
+
 .cell.n3 {
   color: var(--threeMines);
 }
+
 .cell.n4 {
   color: var(--fourMines);
 }
+
 .cell.n5 {
   color: var(--fiveMines);
 }
+
 .cell.n6 {
   color: var(--sixMines);
 }
+
 .cell.n7 {
   color: var(--sevenMines);
 }
+
 .cell.n8 {
   color: var(--eightMines);
 }

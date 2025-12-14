@@ -16,7 +16,6 @@ export function updateBoardSize() {
 }
 
 export function generateGame(board) {
-  board.innerHTML = "";
   const gameBoard = generateBoard();
   gameOptions.board = gameBoard;
 
@@ -24,6 +23,24 @@ export function generateGame(board) {
   placeMines(gameBoard);
   calculateMineNeighbors(gameBoard);
   renderBoard(board, gameBoard);
+
+  if (gameOptions.startRow !== null && gameOptions.startCol !== null) {
+    const startCell = document.querySelector(
+      `.cell[data-row='${gameOptions.startRow}'][data-col='${gameOptions.startCol}']`,
+    );
+    if (startCell) {
+      revealCell(
+        gameBoard,
+        gameOptions.startRow,
+        gameOptions.startCol,
+        startCell,
+      );
+    }
+
+    startTimer();
+    gameOptions.startRow = null;
+    gameOptions.startCol = null;
+  }
 }
 
 export function resolveCoord(value, max) {
@@ -73,16 +90,30 @@ export function setDifficulty(level) {
   console.log(
     `Difficulty set to ${level}: ${gameOptions.width}x${gameOptions.height}, ${gameOptions.mineCount} mines`,
   );
-  start();
+  reset();
 }
 
 export function start() {
   gameOptions.flags = 0;
-  gameOptions.gameState = 0;
+  gameOptions.gameState = 1;
+
   DOMelements.timerDisplay.textContent = "000";
   endTimer();
+
   updateHeaders();
   generateGame(DOMelements.board);
+}
+
+export function reset() {
+  gameOptions.flags = 0;
+  gameOptions.gameState = 0;
+  gameOptions.board = null;
+
+  DOMelements.timerDisplay.textContent = "000";
+  endTimer();
+
+  updateHeaders();
+  renderBoard(DOMelements.board, null);
 }
 
 function generateBoard() {
@@ -108,7 +139,10 @@ function placeMines(board) {
   while (minesPlaced < gameOptions.mineCount) {
     const row = Math.floor(Math.random() * gameOptions.height);
     const col = Math.floor(Math.random() * gameOptions.width);
-    if (!board[row][col].mine) {
+    if (
+      !board[row][col].mine &&
+      !(row === gameOptions.startRow && col === gameOptions.startCol)
+    ) {
       board[row][col].mine = true;
       minesPlaced++;
     }
@@ -248,18 +282,23 @@ export function checkWin(board) {
   endTimer();
   flagAllMines(board);
 
-  updateGameStats(true, gameOptions.timer);
+  const endTime = Date.now();
+
+  updateGameStats(true, gameOptions.startTime, endTime);
   return true;
 }
 
 function revealAllMines(board) {
   for (let row = 0; row < gameOptions.height; row++) {
     for (let col = 0; col < gameOptions.width; col++) {
+      const cellElement = document.querySelector(
+        `.cell[data-row='${row}'][data-col='${col}']`,
+      );
       if (board[row][col].mine) {
-        const cellElement = document.querySelector(
-          `.cell[data-row='${row}'][data-col='${col}']`,
-        );
+        console.log(row,col)
         cellElement.classList.add("mine2");
+      } else {
+        cellElement.classList.add("safe")
       }
     }
   }

@@ -5,7 +5,7 @@ export function saveToStorage() {
   localStorage.setItem("storage", JSON.stringify(storage));
 }
 
-export function updateGameStats(result, time) {
+export function updateGameStats(result, startTime, endTime) {
   const { type, difficulty } = gameOptions;
   const stats = storage.stats[type][difficulty];
 
@@ -14,7 +14,8 @@ export function updateGameStats(result, time) {
   if (result) {
     stats.wins++;
 
-    if (time < stats.best) {
+    const time = ((endTime - startTime) / 1000).toFixed(3);
+    if (time < stats.best || !stats.best) {
       stats.best = time;
     }
   }
@@ -22,7 +23,6 @@ export function updateGameStats(result, time) {
   saveToStorage();
   generateStatisticsUI();
 }
-
 
 export function loadZoomLevel() {
   const savedZoom = localStorage.getItem("zoomLevel");
