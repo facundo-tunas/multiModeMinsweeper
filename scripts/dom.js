@@ -100,16 +100,15 @@ export function initializeEventListeners() {
   );
   DOMelements.startButton.addEventListener("click", reset);
 
-  const difficultyOptions = document.querySelectorAll(".settings-modal li");
+  const difficultyOptions = document.querySelectorAll(".settings-modal .difficulties li");
   difficultyOptions.forEach((option) => {
     option.addEventListener("click", () => {
       setDifficulty(option.dataset.difficulty);
       DOMelements.settingsModal.style.display = "none";
-      console.log(hoveredCell);
     });
   });
 
-  const modeOptions = document.querySelectorAll(".settings-modal [data-mode]");
+  const modeOptions = document.querySelectorAll(".settings-modal .modes [data-mode]");
   modeOptions.forEach((option) => {
     option.addEventListener("click", () => {
       setMode(option.dataset.mode);
@@ -338,6 +337,8 @@ export function setMode(mode) {
 
   gameOptions.type = mode;
 
+  console.log("Xd")
+  setDifficulty(gameOptions.difficulty);
   reset();
   updateSelected();
   generateStatisticsUI();

@@ -56,34 +56,40 @@ export function isInside(row, col) {
   );
 }
 
+function getMineMultiplier() {
+  const maxMines = getMaxMines();
+  if (maxMines === 1) return 1;
+
+  return 1 + (maxMines - 1) * 0.5;
+}
+
 export function setDifficulty(level) {
+  const multiplier = getMineMultiplier();
+
   switch (level) {
     case "beginner":
       gameOptions.width = 8;
       gameOptions.height = 8;
-      gameOptions.mineCount = 10;
-
+      gameOptions.mineCount = Math.floor(10 * multiplier);
       gameOptions.difficulty = "beginner";
       break;
     case "intermediate":
       gameOptions.width = 16;
       gameOptions.height = 16;
-      gameOptions.mineCount = 40;
+      gameOptions.mineCount = Math.floor(40 * multiplier);
 
       gameOptions.difficulty = "intermediate";
       break;
     case "advanced":
       gameOptions.width = 30;
       gameOptions.height = 16;
-      gameOptions.mineCount = 99;
-
+      gameOptions.mineCount = Math.floor(99 * multiplier);
       gameOptions.difficulty = "advanced";
       break;
     default:
       gameOptions.width = 16;
       gameOptions.height = 16;
-      gameOptions.mineCount = 40;
-
+      gameOptions.mineCount = Math.floor(40 * multiplier);
       gameOptions.difficulty = "intermediate";
   }
   updateBoardSize();
@@ -122,10 +128,10 @@ function generateBoard() {
     const row = [];
     for (let j = 0; j < gameOptions.width; j++) {
       row.push({
-        mine: false,
+        mine: 0,
         neighborMines: 0,
         revealed: false,
-        flagged: false,
+        flagged: 0,
         neighborFlags: null,
       });
     }
@@ -134,16 +140,27 @@ function generateBoard() {
   return board;
 }
 
+function getMaxMines() {
+  if (gameOptions.type === "twoMines") return 2;
+  if (gameOptions.type === "threeMines") return 3;
+
+  return 1;
+}
+
 function placeMines(board) {
   let minesPlaced = 0;
+  const maxMinesPerCell = getMaxMines();
+
   while (minesPlaced < gameOptions.mineCount) {
     const row = Math.floor(Math.random() * gameOptions.height);
     const col = Math.floor(Math.random() * gameOptions.width);
-    if (
-      !board[row][col].mine &&
-      !(row === gameOptions.startRow && col === gameOptions.startCol)
-    ) {
-      board[row][col].mine = true;
+
+    if (row === gameOptions.startRow && col === gameOptions.startCol) {
+      continue;
+    }
+
+    if (board[row][col].mine < maxMinesPerCell) {
+      board[row][col].mine++;
       minesPlaced++;
     }
   }
@@ -163,7 +180,7 @@ export function calculateMineNeighbors(board) {
 
   for (let row = 0; row < gameOptions.height; row++) {
     for (let col = 0; col < gameOptions.width; col++) {
-      if (board[row][col].mine) continue;
+      if (board[row][col].mine > 0) continue;
 
       let mineCount = 0;
       for (const [dx, dy] of directions) {
@@ -171,9 +188,8 @@ export function calculateMineNeighbors(board) {
         const c = resolveCoord(col + dy, gameOptions.width);
 
         if (!isInside(r, c)) continue;
-        if (board[r][c].mine) {
-          mineCount++;
-        }
+
+        mineCount += board[r][c].mine;
       }
       board[row][col].neighborMines = mineCount;
     }
@@ -200,32 +216,39 @@ export function calculateNeighborFlags(board, row, col) {
 
     if (!isInside(r, c)) continue;
 
-    if (board[r][c].flagged) {
-      flagCount++;
-    }
+    flagCount += board[r][c].flagged;
   }
   board[row][col].neighborFlags = flagCount;
 }
 
 export function revealCell(board, row, col, cellElement) {
-  if (board[row][col].revealed || board[row][col].flagged) return;
+  if (board[row][col].revealed || board[row][col].flagged > 0) return;
   board[row][col].revealed = true;
 
-  if (board[row][col].mine) {
-    cellElement.classList.add("mine");
-    revealAllMines(board);
-  } else {
-    cellElement.classList.add("revealed");
-    const neighborMines = board[row][col].neighborMines;
-    cellElement.classList.add(`n${neighborMines}`);
-
-    cellElement.innerText = neighborMines > 0 ? neighborMines : "";
-    if (neighborMines === 0) {
-      revealNeighbors(board, row, col);
+  // there is a mine
+  if (board[row][col].mine > 0) {
+    cellElement.classList.add("mine-hit");
+    if (board[row][col].mine === 2) {
+      cellElement.classList.add("double-mine");
     }
-
-    checkWin(gameOptions.board);
+    if (board[row][col].mine === 3) {
+      cellElement.classList.add("triple-mine");
+    }
+    revealAllMines(board);
+    return;
   }
+
+  // there is no mine
+  cellElement.classList.add("revealed");
+  const neighborMines = board[row][col].neighborMines;
+  cellElement.classList.add(`n${neighborMines}`);
+
+  cellElement.innerText = neighborMines > 0 ? neighborMines : "";
+  if (neighborMines === 0) {
+    revealNeighbors(board, row, col);
+  }
+
+  checkWin(gameOptions.board);
 }
 
 export function revealNeighbors(board, row, col) {
@@ -257,21 +280,29 @@ export function revealNeighbors(board, row, col) {
 export function flagCell(board, row, col, cellElement) {
   if (board[row][col].revealed) return;
 
-  if (board[row][col].flagged) {
-    board[row][col].flagged = false;
-    cellElement.classList.remove("flagged");
-    gameOptions.flags--;
-  } else {
-    board[row][col].flagged = true;
+  const maxFlagsPerCell = getMaxMines();
+  const previousFlags = board[row][col].flagged;
+
+  board[row][col].flagged =
+    (board[row][col].flagged + 1) % (maxFlagsPerCell + 1);
+
+  cellElement.classList.remove("flagged", "double-flagged", "triple-flagged");
+
+  if (board[row][col].flagged === 1) {
     cellElement.classList.add("flagged");
-    gameOptions.flags++;
+  } else if (board[row][col].flagged === 2) {
+    cellElement.classList.add("double-flagged");
+  } else if (board[row][col].flagged === 3) {
+    cellElement.classList.add("triple-flagged");
   }
+
+  gameOptions.flags += board[row][col].flagged - previousFlags;
 }
 
 export function checkWin(board) {
   for (let row = 0; row < gameOptions.height; row++) {
     for (let col = 0; col < gameOptions.width; col++) {
-      if (!board[row][col].mine && !board[row][col].revealed) {
+      if (board[row][col].mine === 0 && !board[row][col].revealed) {
         return false;
       }
     }
@@ -294,11 +325,17 @@ function revealAllMines(board) {
       const cellElement = document.querySelector(
         `.cell[data-row='${row}'][data-col='${col}']`,
       );
-      if (board[row][col].mine) {
-        console.log(row,col)
-        cellElement.classList.add("mine2");
-      } else {
-        cellElement.classList.add("safe")
+      if (board[row][col].mine > 0) {
+        cellElement.classList.add("mine");
+        if (board[row][col].mine === 2) {
+          cellElement.classList.add("double-mine");
+        }
+        if (board[row][col].mine === 3) {
+          cellElement.classList.add("triple-mine");
+        }
+      }
+      if (board[row][col].flagged > 0 && board[row][col].mine === 0) {
+        cellElement.classList.add("safe");
       }
     }
   }
@@ -311,11 +348,17 @@ function revealAllMines(board) {
 function flagAllMines(board) {
   for (let row = 0; row < gameOptions.height; row++) {
     for (let col = 0; col < gameOptions.width; col++) {
-      if (board[row][col].mine) {
+      if (board[row][col].mine > 0) {
         const cellElement = document.querySelector(
           `.cell[data-row='${row}'][data-col='${col}']`,
         );
-        cellElement.classList.add("flagged");
+        if (board[row][col].mine === 2) {
+          cellElement.classList.add("double-flagged");
+        } else if (board[row][col].mine === 3) {
+          cellElement.classList.add("triple-flagged");
+        } else {
+          cellElement.classList.add("flagged");
+        }
       }
     }
   }
